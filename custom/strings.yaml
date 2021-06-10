@@ -1,0 +1,87 @@
+### Default String Configuration
+### Add custom strings in custom/strings.yaml
+
+# base config in partials/branding, partials/head
+branding:
+  name: Reaktor Library
+  prettyName: Reaktor Library
+  org: Reaktor
+  icon: /assets/images/icon-logo.svg
+  favicon: /assets/images/library.ico
+
+# pages/categories, pages/index, partials/search
+landing:
+  tagline: Experimental new Intranet. Actually just shows the contents of our shared Google Drive in a nice manner.
+  viewAll: View All
+  quickLink: <a href="/confluence-replacement/getting-started-with-reaktor-library">Get Started.</a>
+  modules:
+    - tag: team
+      label: Teams
+      style: button
+    - tag: featured
+      label: Featured
+      style: docs         
+
+# partials/footer
+footer:
+  helpText: Questions? Contact your organization's administrators.
+  defaultEmail: user@your_organization.com
+  buttons:
+    edit: Edit This Page
+    move: Move This Page
+    create: Create New Page
+    viewFolder: View Folder
+
+# pages/search, partials/search
+search:
+  placeholder: Search...
+  results:
+    title: !!js/function (query) => `Search results for ${query}`
+    kicker: !!js/function (query) => `Showing results for '${query}':`
+    label:
+      folder: !!js/function (path, folder) => `Filed under <a class="folder" href=${path}><span>${folder}</span></a>`
+      person: !!js/function (lastUser) => `Last edited by <span class='author'>${lastUser}`
+    none:
+      kicker: !!js/function (query) => `There are no results for '${query}'`
+      suggestion: To request a new page, contact your administrators.
+
+# categories/default
+folder:
+  childrenList:
+    kicker: !!js/function (title) => `Pages in ${title}`
+  # partials/sectionList
+  sectionList:
+    heading: "Table of Contents:"
+  #partials/siblingList
+  siblingList:
+    heading: Related Docs
+
+# playlists/default
+playlist:
+  childrenList:
+    kicker: !!js/function (title) => `${title} Playlist`
+  siblingList:
+    heading: !!js/function (title) => `${title} Playlist`
+  nav:
+    previous: <
+    next: '>'
+
+# errors
+error:
+  403:
+    title: Operation Not Permitted
+    heading: Not Authorized
+    message: "<p>The page you're trying to access is forbidden. Please try <a href='/login'>logging in</a> with another account, or contact your organization's administrators for assistance.</p>"
+  404:
+    title: Page Not Found
+    heading: Whoops, that's a 404.
+    message: Perhaps try to search for something else instead?
+  500:
+    title: Server Error
+    heading: Uh oh, that's a 500.
+    message: Perhaps try to search for something else instead?
+
+# warning messages
+warning:
+  duplicate: !!js/function (names, folderId) => `Multiple resources in <a href="https://drive.google.com/drive/u/0/folders/${folderId}" target="_blank">this folder</a> share the same name&#58; ${names.join(', ')}. Only one will be accesible through Library.`
+
