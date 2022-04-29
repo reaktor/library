@@ -36,7 +36,7 @@ describe('HTML processing', () => {
 
   it('strips unnecessary &nbsp;s', () => {
     const introHTML = testGlobal.output("p:contains('Basic text format')").html()
-    assert.match(introHTML, /Text color and highlighting/)
+    assert.match(introHTML, /Highlighting/)
   })
 
   describe('inline formats', () => {

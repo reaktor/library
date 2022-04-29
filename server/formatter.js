@@ -53,10 +53,11 @@ function normalizeHtml(html, docPath) {
       // REMARK: should we replace with <strong> and <em> eventually?
       const newStyle = elStyle.split(';').filter((styleRule) => {
         if (['img'].includes(el.tagName) && /width/.test(styleRule)) { return true }
-        return /font-style:italic|font-weight:700|text-decoration:underline|color\s*:\s?([",']#)?\w*[",']?/.test(styleRule)
+        return /font-style:italic|font-weight:700|text-decoration:underline|color\s*:\s?#([0-9a-fA-F]{3}){1,2}/.test(styleRule)
       }).join(';')
 
-      if (newStyle.length > 0) {
+      // Remove empty default color
+      if (newStyle.length > 0 && newStyle !== 'color:#000000') {
         $(el).attr('style', newStyle)
       } else if (!isClean) {
         $(el).removeAttr('style') // if a <p>, <h1>, or other tag has no styles, kill the style attr
