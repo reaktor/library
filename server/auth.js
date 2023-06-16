@@ -19,10 +19,23 @@ if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && process.env.NODE_ENV === 'dev
   process.env.GOOGLE_APPLICATION_CREDENTIALS = path.join(__dirname, '.auth.json')
 }
 
-// only public method, returns the authClient that can be used for making other requests
+// returns the authClient that can be used for making other requests
 exports.getAuth = async () => {
   if (authClient && process.env.NODE_ENV !== 'test') return authClient
   return setAuthClient()
+}
+
+// This is only used when data is fetched manually via a download link vs using the Google Drive library
+exports.getAccessToken = async () => {
+  const accessToken = await exports.getAuth()
+    .then((client) => {
+      return client.getAccessToken()
+    })
+    .catch((err) => {
+      console.error('Error getting access token:', err)
+    })
+
+  return accessToken.token
 }
 
 // configures the auth client if we don't already have one

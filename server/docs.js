@@ -1,5 +1,6 @@
 'use strict'
 
+const axios = require('axios')
 const {google} = require('googleapis')
 const cheerio = require('cheerio')
 const slugify = require('limax')
@@ -8,7 +9,7 @@ const xlsx = require('xlsx')
 const cache = require('./cache')
 const formatter = require('./formatter')
 const log = require('./logger')
-const {getAuth} = require('./auth')
+const {getAuth, getAccessToken} = require('./auth')
 
 const supportedTypes = new Set(['document', 'spreadsheet', 'text/html'])
 
@@ -29,7 +30,7 @@ exports.slugify = (text = '') => {
   return slugify(text)
 }
 
-exports.fetchDoc = async (id, resourceType, req) => {
+exports.fetchDoc = async (id, resourceType, exportLinks, req) => {
   const data = await cache.get(id)
   if (data && data.content) {
     log.info(`CACHE HIT ${req.path}`)
@@ -37,10 +38,8 @@ exports.fetchDoc = async (id, resourceType, req) => {
   }
 
   const auth = await getAuth()
-
-  const driveDoc = await fetch({id, resourceType, req}, auth)
+  const driveDoc = await fetch({id, resourceType, exportLinks, req}, auth)
   const originalRevision = driveDoc[1]
-
   const {html, byline, createdBy, sections} = formatter.getProcessedDocAttributes(driveDoc, req.path)
   const payload = {html, byline, createdBy, sections}
 
@@ -53,7 +52,7 @@ exports.fetchDoc = async (id, resourceType, req) => {
   return payload
 }
 
-async function fetchHTMLForId(id, resourceType, req, drive) {
+async function fetchHTMLForId(id, resourceType, exportLinks, req, drive) {
   if (!supportedTypes.has(resourceType)) {
     return `Library does not support viewing ${resourceType}s yet.`
   }
@@ -66,12 +65,45 @@ async function fetchHTMLForId(id, resourceType, req, drive) {
     return fetchHTML(drive, id)
   }
 
-  const {data} = await drive.files.export({
-    fileId: id,
-    // text/html exports are not suupported for slideshows
-    mimeType: resourceType === 'presentation' ? 'text/plain' : 'text/html'
+  try {
+    const {data} = await drive.files.export({
+      fileId: id,
+      // text/html exports are not suupported for slideshows
+      mimeType: resourceType === 'presentation' ? 'text/plain' : 'text/html'
+    })
+
+    return data
+  } catch (e) {
+    const errorResponse = e.response.data.error
+    // If the Google Drive API returns 403, we fall back to using the export link directly
+    if (errorResponse.code === 403 && errorResponse.message === "This file is too large to be exported.") {
+      console.log("falling back to using the export link...")
+      const manuallyFetchedData = await fetchManually(resourceType, exportLinks)
+      return manuallyFetchedData
+    } else {
+      throw e
+    }
+  }
+}
+async function fetchManually(resourceType, exportLinks) {
+  const accessToken = await getAccessToken()
+  const exportLink = exportLinks['text/html']
+  const headers = {Authorization: `Bearer ${accessToken}`}
+
+  const fetchedData = await axios({
+    url: exportLink,
+    method: 'GET',
+    responseType: resourceType === 'presentation' ? 'text/plain' : 'text/html',
+    headers: headers
   })
-  return data
+    .then((response) => {
+      const fileContents = response.data
+      return fileContents
+    })
+    .catch((err) => {
+      console.error('Error downloading file:', err)
+    })
+  return fetchedData
 }
 
 async function fetchOriginalRevisions(id, resourceType, req, drive) {
@@ -89,12 +121,13 @@ async function fetchOriginalRevisions(id, resourceType, req, drive) {
   })
 }
 
-async function fetch({id, resourceType, req}, authClient) {
+async function fetch({id, resourceType, exportLinks, req}, authClient) {
   const drive = google.drive({version: 'v3', auth: authClient})
   const documentData = await Promise.all([
-    fetchHTMLForId(id, resourceType, req, drive),
+    fetchHTMLForId(id, resourceType, exportLinks, req, drive),
     fetchOriginalRevisions(id, resourceType, req, drive)
   ])
+
   return documentData
 }
 

@@ -20,9 +20,8 @@ async function handleCategory(req, res) {
 
   if (!meta || !data) return 'next'
 
-  const {resourceType, tags, id} = meta
+  const {resourceType, tags, id, exportLinks} = meta
   const {breadcrumb, duplicates} = data
-
   const layout = categories.has(root) ? root : 'default'
   const template = `categories/${layout}`
 
@@ -65,7 +64,7 @@ async function handleCategory(req, res) {
 
   res.locals.docId = data.id // we need this for history later
   // for docs, fetch the html and then combine with the base data
-  const {html, byline, createdBy, sections} = await fetchDoc(id, resourceType, req)
+  const {html, byline, createdBy, sections} = await fetchDoc(id, resourceType, exportLinks, req)
 
   const renderData = Object.assign({}, baseRenderData, {
     content: html,
