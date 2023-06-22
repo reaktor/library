@@ -65,25 +65,8 @@ async function fetchHTMLForId(id, resourceType, exportLinks, req, drive) {
     return fetchHTML(drive, id)
   }
 
-  try {
-    const {data} = await drive.files.export({
-      fileId: id,
-      // text/html exports are not suupported for slideshows
-      mimeType: resourceType === 'presentation' ? 'text/plain' : 'text/html'
-    })
-
-    return data
-  } catch (e) {
-    const errorResponse = e.response.data.error
-    // If the Google Drive API returns 403, we fall back to using the export link directly
-    if (errorResponse.code === 403 && errorResponse.message === "This file is too large to be exported.") {
-      console.log("falling back to using the export link...")
-      const manuallyFetchedData = await fetchManually(resourceType, exportLinks)
-      return manuallyFetchedData
-    } else {
-      throw e
-    }
-  }
+  const manuallyFetchedData = await fetchManually(resourceType, exportLinks)
+  return manuallyFetchedData
 }
 async function fetchManually(resourceType, exportLinks) {
   const accessToken = await getAccessToken()
