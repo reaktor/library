@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+export GIT_EXEC_PATH=/app/.apt/usr/lib/git-core
+
 if [[ -f ./.env ]];
   then
     echo "sourcing environment variables from .env"
