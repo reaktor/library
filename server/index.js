@@ -51,6 +51,7 @@ const customImagesDirExists = fs.existsSync(customImagesDir)
 if (customImagesDirExists) {
   // serve public/images from custom dir and other public assets from public dir
   app.use('/assets/images', express.static(customImagesDir))
+  app.use('/assets/fonts', express.static(path.join(__dirname, '../public/fonts')))
   app.use('/assets/css', express.static(path.join(__dirname, '../public/css')))
   app.use('/assets/scripts', express.static(path.join(__dirname, '../public/scripts')))
 } else {
